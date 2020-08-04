@@ -1,0 +1,14 @@
+apiVersion: skaffold/v2beta6
+kind: Config
+metadata:
+  name: campwiz
+build:
+  artifacts:
+    - image: campwiz
+  tagPolicy:
+    sha256: {}
+deploy:
+  kubectl:
+    manifests:
+      - kubernetes-manifests/campwiz.deployment.yaml
+      - kubernetes-manifests/campwiz.service.yaml
