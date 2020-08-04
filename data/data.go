@@ -88,7 +88,7 @@ func Read(name string) ([]byte, error) {
 	return ioutil.ReadFile(p)
 }
 
-func ExpandAcronyms(s string) string {
+func expandAcronyms(s string) string {
 	var words []string
 	for _, w := range strings.Split(s, " ") {
 		if val, exists := Acronyms[strings.ToUpper(w)]; exists {
@@ -106,7 +106,7 @@ func ExpandAcronyms(s string) string {
 
 func ShortenName(s string) (string, bool) {
 	glog.V(3).Infof("Shorten: %s", s)
-	keyWords := strings.Split(ExpandAcronyms(s), " ")
+	keyWords := strings.Split(expandAcronyms(s), " ")
 	for i, kw := range keyWords {
 		if _, exists := ExtraWords[strings.ToUpper(kw)]; exists {
 			glog.V(1).Infof("Removing extra word in %s: %s", s, kw)
@@ -117,7 +117,7 @@ func ShortenName(s string) (string, bool) {
 	return s, false
 }
 
-func ShortName(s string) string {
+func shortName(s string) string {
 	var shortened bool
 	for {
 		s, shortened = ShortenName(s)
@@ -133,10 +133,10 @@ func Merge(r *result.Result) {
 
 	variations := []string{
 		r.Name,
-		strings.Join(strings.Split(ShortName(ExpandAcronyms(r.Name)), " "), ""),
-		ShortName(r.Name),
-		ExpandAcronyms(r.Name),
-		ShortName(ExpandAcronyms(r.Name)),
+		strings.Join(strings.Split(shortName(expandAcronyms(r.Name)), " "), ""),
+		shortName(r.Name),
+		expandAcronyms(r.Name),
+		shortName(expandAcronyms(r.Name)),
 	}
 	glog.V(2).Infof("Merge Variations: %v", strings.Join(variations, "|"))
 	for _, name := range variations {
