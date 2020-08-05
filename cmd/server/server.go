@@ -4,12 +4,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"text/template"
 	"time"
 
-	"github.com/golang/glog"
+	"log"
+
 	"github.com/tstromberg/campwiz/data"
 	"github.com/tstromberg/campwiz/query"
 	"github.com/tstromberg/campwiz/result"
@@ -34,7 +36,7 @@ type TemplateContext struct {
 func handler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Incoming request: %+v", r)
-	glog.Infof("Incoming request: %+v", r)
+	log.Println("Incoming request: %+v", r)
 	var startDate = time.Now()
 	var endDate time.Time
 	var n, dist int
@@ -44,21 +46,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if r.Method == "POST" {
 		err = r.ParseForm()
-		glog.Infof("RAW FORM IS %+v", r.Form)
+		log.Println("RAW FORM IS %+v", r.Form)
 		if err != nil {
-			glog.Errorf("error parsing the form: %v", err)
+			log.Println("error parsing the form: %v", err)
 		}
 		if r.Form["nights"] != nil {
 			n, err = strconv.Atoi(r.Form["nights"][0])
 			if err != nil {
-				glog.Errorf("Error parsing night %q : %v", r.Form["nights"][0], err)
+				log.Println("Error parsing night %q : %v", r.Form["nights"][0], err)
 			}
 		}
 
 		if r.Form["dates"] != nil {
 			startDate, err = time.Parse("2006-01-02", r.Form["dates"][0])
 			if err != nil {
-				glog.Errorf("Error parsing date %q : %v", r.Form["dates"][0], err)
+				log.Println("Error parsing date %q : %v", r.Form["dates"][0], err)
 			}
 
 		}
@@ -66,7 +68,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if r.Form["nights"] != nil {
 			dist, err = strconv.Atoi(r.Form["distance"][0])
 			if err != nil {
-				glog.Errorf("Error parsing distance %q : %v", r.Form["distance"][0], err)
+				log.Println("Error parsing distance %q : %v", r.Form["distance"][0], err)
 			}
 		}
 		crit = query.Criteria{
@@ -80,12 +82,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			// IncludeWalkIn:   r.Form["walk-in"],
 		}
 
-		glog.Errorf("Criteria is %+v", crit)
+		log.Println("Criteria is %+v", crit)
 
 		results, err = query.Search(crit)
-		glog.V(1).Infof("RESULTS: %+v", results)
+		log.Println("RESULTS: %+v", results)
 		if err != nil {
-			glog.Errorf("Search error: %s", err)
+			log.Println("Search error: %s", err)
 		}
 
 	} else {
@@ -95,7 +97,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	outTmpl, err := data.Read("http.tmpl")
 	if err != nil {
-		glog.Errorf("Failed to read template: %v", err)
+		log.Println("Failed to read template: %v", err)
 	}
 	tmpl := template.Must(template.New("http").Parse(string(outTmpl)))
 	ctx := TemplateContext{
@@ -107,7 +109,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = tmpl.ExecuteTemplate(w, "http", ctx)
 	if err != nil {
-		glog.Errorf("template: %v", err)
+		log.Println("template: %v", err)
 	}
 }
 
@@ -116,5 +118,5 @@ func init() {
 }
 func main() {
 	http.HandleFunc("/", handler)
-	glog.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -3,9 +3,11 @@ package data
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
-	"github.com/golang/glog"
+	"log"
+
 	"github.com/tstromberg/campwiz/result"
 
 	"gopkg.in/yaml.v2"
@@ -18,7 +20,7 @@ type MEntries struct {
 // MMatches finds the most likely key name for a campsite.
 func MMatches(name string) []string {
 	keyName := strings.ToUpper(name)
-	glog.V(1).Infof("MMatches(%s) ...", keyName)
+	log.Println("MMatches(%s) ...", keyName)
 
 	// Three levels of matches.
 	var exact []string
@@ -32,7 +34,7 @@ func MMatches(name string) []string {
 
 	for k := range M {
 		i := strings.Index(k, keyName)
-		glog.V(4).Infof("Testing: keyName=%s == k=%s (index=%d)", keyName, k, i)
+		log.Println("Testing: keyName=%s == k=%s (index=%d)", keyName, k, i)
 		// The whole key does not exist.
 		if i == -1 {
 			var wordMatches []string
@@ -45,13 +47,13 @@ func MMatches(name string) []string {
 				}
 			}
 			if len(wordMatches) == len(keywords) {
-				glog.V(2).Infof("All words match for %s: %s", keyName, k)
+				log.Println("All words match for %s: %s", keyName, k)
 				allWords = append(allWords, k)
 			} else if len(wordMatches) > 1 {
-				glog.V(2).Infof("Partial match for %s: %s (matches=%v)", keyName, k, wordMatches)
+				log.Println("Partial match for %s: %s (matches=%v)", keyName, k, wordMatches)
 				someWords = append(someWords, k)
 			} else if len(wordMatches) == 1 {
-				glog.V(3).Infof("Found single word match for %s: %s (matches=%v)", keyName, k, wordMatches)
+				log.Println("Found single word match for %s: %s (matches=%v)", keyName, k, wordMatches)
 				singleWord = append(singleWord, k)
 			}
 			continue
@@ -59,14 +61,14 @@ func MMatches(name string) []string {
 		if i == 0 {
 			if strings.HasPrefix(k, keyName+" - ") {
 				exact = append(exact, k)
-				glog.V(2).Infof("Found exact match for %s: %s", keyName, k)
+				log.Println("Found exact match for %s: %s", keyName, k)
 				continue
 			}
-			glog.V(2).Infof("Found prefix match for %s: %s", keyName, k)
+			log.Println("Found prefix match for %s: %s", keyName, k)
 			prefix = append(prefix, k)
 			continue
 		} else if i > 0 {
-			glog.V(2).Infof("Found substring match for %s: %s", keyName, k)
+			log.Println("Found substring match for %s: %s", keyName, k)
 			contains = append(contains, k)
 		}
 	}
@@ -100,13 +102,13 @@ func LoadM() error {
 	if err != nil {
 		return err
 	}
-	glog.V(1).Infof("Loaded %d entries from %s ...", len(ms.Entries), path)
+	log.Println("Loaded %d entries from %s ...", len(ms.Entries), path)
 	for _, m := range ms.Entries {
 		if val, ok := M[m.Key]; ok {
 			return fmt.Errorf("already loaded. Previous=%+v, New=%+v", val, m)
 		}
 		M[m.Key] = m
-		glog.V(3).Infof("Loaded [%s]: %+v", m.Name, m)
+		log.Println("Loaded [%s]: %+v", m.Name, m)
 	}
 	return nil
 }

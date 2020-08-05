@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"go/build"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/tstromberg/campwiz/result"
 )
 
@@ -48,7 +48,7 @@ var (
 )
 
 func exists(p string) bool {
-	glog.V(2).Infof("Checking %s", p)
+	log.Println("Checking %s", p)
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		return false
 	}
@@ -56,7 +56,7 @@ func exists(p string) bool {
 }
 
 func path(name string) string {
-	glog.V(2).Infof("Finding path to %s ...", name)
+	log.Println("Finding path to %s ...", name)
 	binpath, err := os.Executable()
 	if err != nil {
 		binpath = "."
@@ -71,10 +71,10 @@ func path(name string) string {
 	} {
 		p := filepath.Join(d, "data", name)
 		if exists(p) {
-			glog.V(1).Infof("Found %s", p)
+			log.Println("Found %s", p)
 			return p
 		}
-		glog.V(1).Infof("%s not in %s", name, path)
+		log.Println("%s not in %s", name, path)
 	}
 	return ""
 }
@@ -99,17 +99,17 @@ func expandAcronyms(s string) string {
 	}
 	expanded := strings.Join(words, " ")
 	if expanded != s {
-		glog.V(1).Infof("Expanded %s to: %s", s, expanded)
+		log.Println("Expanded %s to: %s", s, expanded)
 	}
 	return expanded
 }
 
 func ShortenName(s string) (string, bool) {
-	glog.V(3).Infof("Shorten: %s", s)
+	log.Println("Shorten: %s", s)
 	keyWords := strings.Split(expandAcronyms(s), " ")
 	for i, kw := range keyWords {
 		if _, exists := ExtraWords[strings.ToUpper(kw)]; exists {
-			glog.V(1).Infof("Removing extra word in %s: %s", s, kw)
+			log.Println("Removing extra word in %s: %s", s, kw)
 			keyWords = append(keyWords[:i], keyWords[i+1:]...)
 			return strings.Join(keyWords, " "), true
 		}
@@ -129,7 +129,7 @@ func shortName(s string) string {
 }
 
 func Merge(r *result.Result) {
-	glog.V(2).Infof("Merge: %s", r.Name)
+	log.Println("Merge: %s", r.Name)
 
 	variations := []string{
 		r.Name,
@@ -138,26 +138,26 @@ func Merge(r *result.Result) {
 		expandAcronyms(r.Name),
 		shortName(expandAcronyms(r.Name)),
 	}
-	glog.V(2).Infof("Merge Variations: %v", strings.Join(variations, "|"))
+	log.Println("Merge Variations: %v", strings.Join(variations, "|"))
 	for _, name := range variations {
 		mm := MMatches(name)
-		glog.V(2).Infof("MMatches(%s) result: %v", name, mm)
+		log.Println("MMatches(%s) result: %v", name, mm)
 		if len(mm) > 1 {
 			// So, we have multiple matches. Perhaps the locale will help?
-			glog.V(2).Infof("No unique for %s: %+v", name, mm)
+			log.Println("No unique for %s: %+v", name, mm)
 			for _, m := range mm {
 				// private knowledge
 				if strings.Contains(r.ShortDesc, strings.Split(m, " - ")[1]) {
-					glog.V(2).Infof("Lucky desc match: %s", m)
+					log.Println("Lucky desc match: %s", m)
 					r.M = M[m]
 					return
 				}
 			}
 		} else if len(mm) == 1 {
-			glog.V(2).Infof("Match: %+v", mm)
+			log.Println("Match: %+v", mm)
 			r.M = M[mm[0]]
 			return
 		}
 	}
-	glog.V(2).Infof("Unable to match: %+v", r)
+	log.Println("Unable to match: %+v", r)
 }

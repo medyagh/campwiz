@@ -5,14 +5,16 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"log"
+
 	"github.com/PuerkitoBio/goquery"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/tstromberg/campwiz/cache"
 	"github.com/tstromberg/campwiz/result"
@@ -55,7 +57,7 @@ type Criteria struct {
 
 // firstPage creates the initial request object for a search.
 func firstPage(c Criteria, t time.Time) cache.Request {
-	glog.Errorf("inside First Page: %+v  and %v", c, t)
+	log.Println("inside First Page: %+v  and %v", c, t)
 	// % curl -L -vvv 'http://www.reserveamerica.com/unifSearch.do' -H 'Content-Type: application/x-www-form-urlencoded' --data 'locationCriteria=SAN+FRANCISCO%2C+CA%2C+USA&locationPosition=%3A%3A-122.41941550000001%3A37.7749295%3A%3ACA&interest=camping&lookingFor=2003&campingDate=Sat+Jan+30+2016&lengthOfStay=2'
 
 	v := url.Values{
@@ -74,9 +76,9 @@ func firstPage(c Criteria, t time.Time) cache.Request {
 		Form:     v,
 		MaxAge:   searchPageExpiry,
 	}
-	glog.Infof("First page: %s", r.URL)
+	log.Println("First page: %s", r.URL)
 	for v, k := range v {
-		glog.Infof("Form value %s = %q", v, k)
+		log.Println("Form value %s = %q", v, k)
 	}
 	return r
 }
@@ -95,7 +97,7 @@ func nextPage(r cache.Result, page int) cache.Request {
 
 // searchForDate runs a search for a single date
 func searchForDate(crit Criteria, date time.Time) (result.Results, error) {
-	glog.Infof("searchForDate: %+v", crit)
+	log.Println("searchForDate: %+v", crit)
 
 	// This page is going to redirect you.
 	r, err := cache.Fetch(firstPage(crit, date))
@@ -121,7 +123,7 @@ func searchForDate(crit Criteria, date time.Time) (result.Results, error) {
 
 		parsed = append(parsed, pr...)
 		if !r.Cached {
-			glog.V(1).Infof("Previous request was uncached, sleeping ...")
+			log.Println("Previous request was uncached, sleeping ...")
 			time.Sleep(uncachedDelay)
 		}
 	}
@@ -138,11 +140,11 @@ func Search(crit Criteria) (result.Results, error) {
 		}
 		results = append(results, dr...)
 	}
-	glog.Infof("Found %d results", len(results))
+	log.Println("Found %d results", len(results))
 	filtered := filter(crit, results)
-	glog.Infof("Post-filter: %d results", len(filtered))
+	log.Println("Post-filter: %d results", len(filtered))
 	merged := merge(filtered)
-	glog.Infof("Post-merge: %d results", len(merged))
+	log.Println("Post-merge: %d results", len(merged))
 	return merged, nil
 }
 
@@ -175,44 +177,44 @@ func availableSiteCounts(card *goquery.Selection, amenities string) (result.Avai
 			}
 			if strings.Contains(ctype, "DAY") {
 				a.Day += count
-				glog.V(1).Infof("Day: %s (%d)", ctype, count)
+				log.Println("Day: %s (%d)", ctype, count)
 				continue
 			}
 			if strings.Contains(ctype, "GROUP") {
 				a.Group += count
-				glog.V(1).Infof("Group: %s (%d)", ctype, count)
+				log.Println("Group: %s (%d)", ctype, count)
 				continue
 			}
 			if strings.Contains(ctype, "RV/TRAILER") || strings.Contains(ctype, "RV ELECTRIC") {
 				a.Rv += count
-				glog.V(1).Infof("Rv: %s (%d)", ctype, count)
+				log.Println("Rv: %s (%d)", ctype, count)
 				continue
 			}
 			if strings.Contains(ctype, "HORSE") || strings.Contains(ctype, "EQUESTRIAN") {
 				a.Equestrian += count
-				glog.V(1).Infof("Equestrian: %s (%d)", ctype, count)
+				log.Println("Equestrian: %s (%d)", ctype, count)
 				continue
 			}
 			if strings.Contains(ctype, "WALK") || strings.Contains(ctype, "HIKE") {
 				a.WalkIn += count
-				glog.V(1).Infof("WalkIn: %s (%d)", ctype, count)
+				log.Println("WalkIn: %s (%d)", ctype, count)
 				continue
 			}
 			if strings.Contains(ctype, "BOAT") || strings.Contains(ctype, "FLOAT") {
 				a.Boat += count
-				glog.V(1).Infof("Boat: %s (%d)", ctype, count)
+				log.Println("Boat: %s (%d)", ctype, count)
 				continue
 			}
 
 			// We have no way of knowing how many sites are accessible or not :(
 			if strings.Contains(amenities, "Accessible") && a.Accessible == 0 {
-				glog.V(1).Infof("Accessible: %s (%d)", ctype, 1)
+				log.Println("Accessible: %s (%d)", ctype, 1)
 				a.Accessible = 1
 				count = count - 1
 			}
 
 			if count > 0 {
-				glog.V(1).Infof("Standard: %s (%d)", ctype, count)
+				log.Println("Standard: %s (%d)", ctype, count)
 				a.Standard += count
 			}
 		}
@@ -221,7 +223,7 @@ func availableSiteCounts(card *goquery.Selection, amenities string) (result.Avai
 }
 
 func parseCard(source *url.URL, card *goquery.Selection, date time.Time) (result.Result, error) {
-	glog.Infof("Parsing card: %s", card.Text())
+	log.Println("Parsing card: %s", card.Text())
 	r := result.Result{}
 	link := card.Find("a.facility_link")
 	r.Name = link.Text()
@@ -231,7 +233,7 @@ func parseCard(source *url.URL, card *goquery.Selection, date time.Time) (result
 	if !exists {
 		return r, fmt.Errorf("Could not find %s href", link.Text())
 	}
-	glog.Infof("Site URL: %s", href)
+	log.Println("Site URL: %s", href)
 
 	target, err := url.Parse(href)
 	if err != nil {
@@ -257,7 +259,7 @@ func parseCard(source *url.URL, card *goquery.Selection, date time.Time) (result
 
 	// Parse amenities
 	r.Amenities = card.Find("div.sites_amenities").First().Text()
-	glog.V(1).Infof("Amenities: %s", r.Amenities)
+	log.Println("Amenities: %s", r.Amenities)
 
 	// Parse Matching sites
 	a, err := availableSiteCounts(card, r.Amenities)
@@ -266,18 +268,18 @@ func parseCard(source *url.URL, card *goquery.Selection, date time.Time) (result
 		return r, err
 	}
 	r.Availability = append(r.Availability, a)
-	glog.Infof("Card result: %+v", r)
+	log.Println("Card result: %+v", r)
 	return r, nil
 }
 
 // parse the results of a search page
 func parseResultsPage(body []byte, sourceURL string, date time.Time, expectedPage int) (result.Results, error) {
-	glog.Infof("*************** Parsing %s - expected page: %d", sourceURL, expectedPage)
+	log.Println("*************** Parsing %s - expected page: %d", sourceURL, expectedPage)
 	source, err := url.Parse(sourceURL)
 	if err != nil {
 		return nil, err
 	}
-	glog.V(1).Infof("Parsing %s (%d bytes)", sourceURL, len(body))
+	log.Println("Parsing %s (%d bytes)", sourceURL, len(body))
 
 	buf := bytes.NewBuffer(body)
 	doc, err := goquery.NewDocumentFromReader(buf)
@@ -286,7 +288,7 @@ func parseResultsPage(body []byte, sourceURL string, date time.Time, expectedPag
 	}
 
 	rl := doc.Find("div.facility_view_header_near").First().Text()
-	glog.V(1).Infof("Results label: %q", rl)
+	log.Println("Results label: %q", rl)
 
 	// Find the marker that tells us what page we are on.
 	ps := doc.Find("select[name=pageSelector] option")
@@ -307,7 +309,7 @@ func parseResultsPage(body []byte, sourceURL string, date time.Time, expectedPag
 		}
 	}
 
-	glog.V(1).Infof("I am on page %d", page)
+	log.Println("I am on page %d", page)
 	if page != expectedPage {
 		return nil, parseError(fmt.Errorf("page=%d, expected %d", page, expectedPage), body)
 	}
@@ -317,7 +319,7 @@ func parseResultsPage(body []byte, sourceURL string, date time.Time, expectedPag
 	for i := range sel.Nodes {
 		r, err := parseCard(source, sel.Eq(i), date)
 		if err != nil {
-			glog.Warningf("Unable to parse card %d: %v", i, err)
+			log.Println("Unable to parse card %d: %v", i, err)
 			continue
 		}
 		results = append(results, r)
@@ -327,6 +329,6 @@ func parseResultsPage(body []byte, sourceURL string, date time.Time, expectedPag
 		return nil, parseError(fmt.Errorf("Unable to parse entries from body"), body)
 	}
 
-	glog.Infof("Finished parsing %s - %d results", sourceURL, len(results))
+	log.Println("Finished parsing %s - %d results", sourceURL, len(results))
 	return results, nil
 }

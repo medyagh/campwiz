@@ -1,20 +1,21 @@
 package query
 
 import (
-	"github.com/golang/glog"
+	"log"
+
 	"github.com/labstack/gommon/log"
 	"github.com/tstromberg/campwiz/result"
 )
 
 // filter applies post-fetch criteria filtering.
 func filter(c Criteria, res result.Results) result.Results {
-	glog.V(1).Infof("Filtering %d results ...", len(res))
+	log.Println("Filtering %d results ...", len(res))
 	var filtered result.Results
 
 	for _, r := range res {
-		glog.Infof("Filtering %s: %+v against %+v", r.Name, r, c)
+		log.Println("Filtering %s: %+v against %+v", r.Name, r, c)
 		if c.MaxDistance < int(r.Distance) {
-			glog.Infof("%s is too far (%.0f miles)", r.Name, r.Distance)
+			log.Println("%s is too far (%.0f miles)", r.Name, r.Distance)
 			continue
 		}
 		if c.IncludeGroup && r.Availability[0].Group > 0 {
