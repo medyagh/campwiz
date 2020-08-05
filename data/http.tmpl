@@ -14,7 +14,7 @@ label {
 
 <h1>sf.campwiz.org</h1>
 
-<form action="/search" method="get">
+<form action="/search" method="post">
     <fieldset>
         <label for="dates">Dates</label>
         <input type="date" id="dates" name="dates" value="{{ .Form.Dates }}" min="{{ .Form.Dates }}">

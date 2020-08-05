@@ -13,6 +13,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/tstromberg/campwiz/cache"
 	"github.com/tstromberg/campwiz/result"
 )
@@ -54,6 +55,7 @@ type Criteria struct {
 
 // firstPage creates the initial request object for a search.
 func firstPage(c Criteria, t time.Time) cache.Request {
+	glog.Errorf("inside First Page: %+v  and %v", c, t)
 	// % curl -L -vvv 'http://www.reserveamerica.com/unifSearch.do' -H 'Content-Type: application/x-www-form-urlencoded' --data 'locationCriteria=SAN+FRANCISCO%2C+CA%2C+USA&locationPosition=%3A%3A-122.41941550000001%3A37.7749295%3A%3ACA&interest=camping&lookingFor=2003&campingDate=Sat+Jan+30+2016&lengthOfStay=2'
 
 	v := url.Values{
@@ -132,7 +134,7 @@ func Search(crit Criteria) (result.Results, error) {
 	for _, d := range crit.Dates {
 		dr, err := searchForDate(crit, d)
 		if err != nil {
-			return results, err
+			return results, errors.Wrap(err, "searchForDate")
 		}
 		results = append(results, dr...)
 	}
