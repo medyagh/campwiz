@@ -16,10 +16,8 @@ label {
 
 <form action="/search" method="get">
     <fieldset>
-    <label>Dates</label>
-      <textarea rows="5" cols="10" maxlength="50" name="dates">
-{{ .Form.Dates }}
-      </textarea>
+        <label for="dates">Dates</label>
+        <input type="date" id="dates" name="dates" value="{{ .Form.Dates }}" min="{{ .Form.Dates }}">
     </fieldset>
 
     <fieldset>
@@ -28,8 +26,8 @@ label {
     </fieldset>
 
     <fieldset>
-        <label>Distance</label>
-        <select name="distance">
+        <label for="distance">Distance</label>
+        <select name="distance" id="distance">
             <option value="50" {{ if eq .Form.Distance 50 }}selected {{ end }}>50 miles</option>
             <option value="100" {{ if eq .Form.Distance 100 }}selected {{ end }}>100 miles</option>
             <option value="150" {{ if eq .Form.Distance 150 }}selected {{ end }}>150 miles</option>
