@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/tstromberg/campwiz/data"
@@ -48,7 +49,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Criteria: crit,
 		Results:  results,
 		Form: formValues{
-			Dates: "2018-09-20",
+			Dates: time.Now().Format("2006-01-02"),
 		},
 	}
 	err = tmpl.ExecuteTemplate(w, "http", ctx)
